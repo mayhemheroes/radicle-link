@@ -1,0 +1,7 @@
+project: radicle-link
+target: parse-json
+
+cmds:
+  - cmd: /parse_json
+  - cmd: /parse_json_no_inst @@
+    libfuzzer: false

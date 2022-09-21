@@ -9,7 +9,7 @@ use nom::{
     branch::alt,
     bytes::streaming::{tag, take_while},
     character::streaming::{char, digit0, one_of},
-    combinator::{cut, map, recognize, value},
+    combinator::{cut, map, map_opt, recognize, value},
     error::{context, ContextError, FromExternalError, ParseError},
     multi::separated_list0,
     sequence::{self, preceded, separated_pair, terminated},
@@ -137,8 +137,8 @@ where
 {
     preceded(
         minus,
-        map(digits, |digits: &'a str| {
-            digits.parse::<i64>().unwrap().neg().into_cjson()
+        map_opt(digits, |digits: &'a str| {
+            digits.parse::<i64>().map(|d| d.neg().into_cjson()).ok()
         }),
     )(i)
 }
@@ -147,8 +147,8 @@ fn unsigned<'a, E>(i: &'a str) -> nom::IResult<&'a str, Value, E>
 where
     E: ParseError<&'a str>,
 {
-    map(digits, |digits: &'a str| {
-        digits.parse::<u64>().unwrap().into_cjson()
+    map_opt(digits, |digits: &'a str| {
+        digits.parse::<u64>().map(|d| d.into_cjson()).ok()
     })(i)
 }
 
