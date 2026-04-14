@@ -1,22 +1,23 @@
 # Build Stage
-FROM ghcr.io/evanrichter/cargo-fuzz:latest as builder
+FROM --platform=linux/amd64 ubuntu:22.04 AS builder
 
-## Add source code to the build stage.
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    curl build-essential
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN cargo install -f cargo-fuzz
+
 ADD . /src
-WORKDIR /src
+WORKDIR /src/link-canonical
 
-RUN echo building instrumented harnesses && \
-    bash -c "pushd link-canonical/fuzz && cargo +nightly -Z sparse-registry fuzz build && popd" && \
-    mv link-canonical/fuzz/target/x86_64-unknown-linux-gnu/release/parse_json /parse_json && \
-    echo done
+RUN cargo +nightly fuzz build && \
+    mv fuzz/target/x86_64-unknown-linux-gnu/release/parse_json /parse_json
 
-RUN echo building non-instrumented harnesses && \
-    export RUSTFLAGS="--cfg fuzzing -Clink-dead-code -Cdebug-assertions -C codegen-units=1" && \
-    bash -c "pushd link-canonical/fuzz && cargo +nightly -Z sparse-registry build --release && popd" && \
-    mv link-canonical/fuzz/target/release/parse_json /parse_json_no_inst && \
-    echo done
+RUN RUSTFLAGS="--cfg fuzzing -Clink-dead-code -Cdebug-assertions -C codegen-units=1" \
+    cargo +nightly build --release --manifest-path fuzz/Cargo.toml && \
+    mv fuzz/target/release/parse_json /parse_json_no_inst
 
 # Package Stage
-FROM rustlang/rust:nightly
+FROM ubuntu:22.04
 
 COPY --from=builder /parse_json /parse_json_no_inst /
