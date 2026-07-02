@@ -1,0 +1,7 @@
+# Mayhem target: parse-json (libFuzzer). Built by mayhem/build.sh to /mayhem/parse_json.
+project: radicle-link
+target: parse-json
+
+cmds:
+  - cmd: /mayhem/parse_json
+    libfuzzer: true

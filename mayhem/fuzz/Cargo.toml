@@ -1,0 +1,29 @@
+[package]
+name = "link-canonical-fuzz-mayhem"
+edition = "2018"
+version = "0.0.0"
+authors = ["Mayhem integration (additive)"]
+publish = false
+
+# Standalone workspace so this additive crate is NOT pulled into the root
+# radicle-link workspace (keeps the mayhem layer purely additive).
+[workspace]
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.link-canonical]
+path = "../../link-canonical"
+
+[lints.rust]
+unexpected_cfgs = { level = "allow", check-cfg = ['cfg(fuzzing)'] }
+
+[[bin]]
+name = "parse_json"
+path = "fuzz_targets/parse_json.rs"
+test = false
+doc = false
+bench = false
